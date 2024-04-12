@@ -4,7 +4,15 @@ import fs from "fs";
 
 import { Browser, Page } from "puppeteer";
 
-async function login(url: string, page:Page) {
+interface ProfileData {
+  name: string;
+  status: string | null;
+  attendances: string[];
+  progresses: string[];
+  assignments: string[];
+}
+
+async function login(url: string, page: Page) {
   // Navigate to the login page
   await page.goto(url);
   await page.waitForNavigation();
@@ -31,14 +39,48 @@ async function login(url: string, page:Page) {
   console.log("Page Title:", pageTitle);
 }
 
-function takeData(page:Page) {
+function takeData(page: Page) {
   // select all
   // open each content (show all dipencet until finish)
   // take data
   // preprocess data (another function)
 }
 
-function preprocessData(data:any) {}
+function formatProfileData(data: ProfileData) {
+  const formattedAttendances: { [key: string]: string } = {};
+  const formattedProgresses: { [key: string]: string } = {};
+  const formattedAssignments: { [key: string]: string } = {};
+
+  // Format attendances
+  data.attendances.forEach((attendance) => {
+    const [status, ...eventName] = attendance.split(" ");
+    const key = eventName.join(" ");
+    formattedAttendances[key] = status;
+  });
+
+  // Format progresses
+  data.progresses.forEach((progress) => {
+    const [name, percentageStr] = progress.split(/(\d+%\s*$)/);
+    const key = name.trim();
+    const value = percentageStr.trim().replace("%", "");
+    formattedProgresses[key] = value;
+  });
+
+  // Format assignments
+  data.assignments.forEach((assignment) => {
+    const [status, ...assignmentName] = assignment.split(" ");
+    const key = assignmentName.join(" ");
+    formattedAssignments[key] = status;
+  });
+
+  return {
+    name: data.name,
+    status: data.status ? data.status : "None",
+    formattedAttendances,
+    formattedProgresses,
+    formattedAssignments,
+  };
+}
 
 (async () => {
   const browser: Browser = await puppeteer.launch({
@@ -46,7 +88,7 @@ function preprocessData(data:any) {}
     // slowMo: 100,
   }); // Launch a visible browser instance
   const page: Page = await browser.newPage();
-  await page.setViewport({ width: 1920, height: 1080 });
+  await page.setViewport({ width: 1366, height: 1080 });
 
   const url = "https://dashboard.bangkit.academy/";
 
@@ -86,70 +128,82 @@ function preprocessData(data:any) {}
     "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div)"
   );
 
-  "/html/body/div/div/div[2]/div/section/section/section[2]/div/div[1]/div/div[1]";
-  
-  const profileData = [];
+  const profileData: ProfileData[] = [];
 
   console.log("ALL PROFILES");
-  for (const profile of allProfiles) {
-    const profileSection = await profile.$$eval(
-      "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div[1]/div/div[1])",
-      (divs) => divs.map((div) => div.textContent?.trim())
-    );
+  for (let i = 0; i < allProfiles.length; i++) {
+    const nameXPath = `::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div[${
+      i + 1
+    }]/div/div[1]/section/div/div/section/div[1]/div[2])`;
+    const statusXPath = `::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div[${
+      i + 1
+    }]/div/div[1]/section/div/div/section/div[2]/div/ul/div/div/div)`;
+    const attendancesXPath = `::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div[${
+      i + 1
+    }]/div/div[2]/section[1]/div/div/div/div[2]/div/div)`;
+    const progressesXPath = `::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div[${
+      i + 1
+    }]/div/div[2]/section[2]/div/div/div/div[2]/div/div)`;
+    const assignmentsXPath = `::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div[${
+      i + 1
+    }]/div/div[2]/section[3]/div/div/div/div[2]/div/div)`;
 
-    const progressSection = await profile.$$eval(
-      "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div[1]/div/div[2])",
-      (divs) => divs.map((div) => div.textContent?.trim())
-    );
-    
-    // console.log("Profile Data:", profileSection);
-    // console.log("Profile Data:", progressSection);
+    const profile = allProfiles[i];
+    const name = (await profile.$eval(
+      nameXPath,
+      (div) => div.textContent
+    )) as string;
+
+    let status = null;
+    try {
+      status = (await profile.$eval(
+        statusXPath,
+        (div) => div.textContent
+      )) as string;
+    } catch {
+      console.error("No status found");
+    }
+
+    const attendances = (await profile.$$eval(attendancesXPath, (divs) =>
+      divs.map((div) => div.textContent)
+    )) as string[];
+
+    const progresses = (await profile.$$eval(progressesXPath, (divs) =>
+      divs.map((div) => div.textContent)
+    )) as string[];
+
+    const assignments = (await profile.$$eval(assignmentsXPath, (divs) =>
+      divs.map((div) => div.textContent)
+    )) as string[];
 
     // Combine profile data into a single object
-    const profileObject = {
-      profileSection,
-      progressSection,
+    const profileObject: ProfileData = {
+      name,
+      status,
+      attendances,
+      progresses,
+      assignments,
     };
 
+    console.log("Profile:", i + 1, " - ", name);
     profileData.push(profileObject);
-
-    console.log("Profile Data:", profileObject);
   }
+
+  console.log("All profile data collected");
 
   // Save profile data to JSON file (error handling included)
   try {
     const fileName = "profile_data.json"; // Customize file name
-    const jsonData = JSON.stringify(profileData, null, 2); // Pretty-print for readability
+
+    // Format the data
+    const formattedData = profileData.map(formatProfileData);
+
+    const jsonData = JSON.stringify(formattedData, null, 2); // Pretty-print for readability
     await fs.promises.writeFile(fileName, jsonData);
     console.log(`Profile data saved to: ${fileName}`);
   } catch (error) {
     console.error("Error saving profile data:", error);
   }
 
-  // const sectionElement = await page.$$(
-  //   "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2])"
-  // );
-
-  // if (sectionElement?.length > 0) {
-  //   const divChildren = await sectionElement[0].$$eval("div", (divs: any) =>
-  //     divs.map((div: any) => div.outerHTML)
-  //   );
-
-  //   console.log("Div Children:", divChildren);
-  //   // You can further process or save the div children data as needed
-  // } else {
-  //   console.log("Section element not found");
-  // }
-
-  // const element = await page.waitForSelector(
-  //   "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div/div/div[2]/section[1]/div)"
-  // );
-
-  // console.log(element?.getProperties().toString());
-
-  await page.evaluate(() => {
-    debugger;
-  });
-
-  // await browser.close();
+  await browser.close();
 })();
