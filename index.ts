@@ -4,6 +4,9 @@ import fs from "fs";
 
 import { Browser, Page } from "puppeteer";
 
+const SLEEP_TIME = 3000;
+const url = "https://dashboard.bangkit.academy/";
+
 interface ProfileData {
   name: string;
   status: string | null;
@@ -11,6 +14,9 @@ interface ProfileData {
   progresses: string[];
   assignments: string[];
 }
+
+const sleep = (delay: number) =>
+  new Promise((resolve) => setTimeout(resolve, delay));
 
 async function login(url: string, page: Page) {
   // Navigate to the login page
@@ -73,6 +79,8 @@ async function clickButtons(page: Page) {
 async function takeData(page: Page): Promise<ProfileData[]> {
   await selectAllOptions(page);
   await clickButtons(page);
+
+  sleep(SLEEP_TIME);
 
   const allProfiles = await page.$$(
     "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div)"
@@ -202,8 +210,6 @@ async function exportAndPreprocess(profileData: ProfileData[]) {
   }); // Launch a visible browser instance
   const page: Page = await browser.newPage();
   await page.setViewport({ width: 1366, height: 1080 });
-
-  const url = "https://dashboard.bangkit.academy/";
 
   await login(url, page);
   const data = await takeData(page);
