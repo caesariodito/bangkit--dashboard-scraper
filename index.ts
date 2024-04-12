@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer";
 import readline from "readline";
+import fs from "fs";
 
 import { Browser, Page } from "puppeteer";
 
@@ -42,10 +43,10 @@ function preprocessData(data:any) {}
 (async () => {
   const browser: Browser = await puppeteer.launch({
     headless: false,
-    devtools: true,
-    slowMo: 100,
+    // slowMo: 100,
   }); // Launch a visible browser instance
   const page: Page = await browser.newPage();
+  await page.setViewport({ width: 1920, height: 1080 });
 
   const url = "https://dashboard.bangkit.academy/";
 
@@ -80,6 +81,50 @@ function preprocessData(data:any) {}
 
   console.log("All 'Show all' buttons clicked");
   // WORKS UNTIL HERE
+
+  const allProfiles = await page.$$(
+    "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div)"
+  );
+
+  "/html/body/div/div/div[2]/div/section/section/section[2]/div/div[1]/div/div[1]";
+  
+  const profileData = [];
+
+  console.log("ALL PROFILES");
+  for (const profile of allProfiles) {
+    const profileSection = await profile.$$eval(
+      "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div[1]/div/div[1])",
+      (divs) => divs.map((div) => div.textContent?.trim())
+    );
+
+    const progressSection = await profile.$$eval(
+      "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div[1]/div/div[2])",
+      (divs) => divs.map((div) => div.textContent?.trim())
+    );
+    
+    // console.log("Profile Data:", profileSection);
+    // console.log("Profile Data:", progressSection);
+
+    // Combine profile data into a single object
+    const profileObject = {
+      profileSection,
+      progressSection,
+    };
+
+    profileData.push(profileObject);
+
+    console.log("Profile Data:", profileObject);
+  }
+
+  // Save profile data to JSON file (error handling included)
+  try {
+    const fileName = "profile_data.json"; // Customize file name
+    const jsonData = JSON.stringify(profileData, null, 2); // Pretty-print for readability
+    await fs.promises.writeFile(fileName, jsonData);
+    console.log(`Profile data saved to: ${fileName}`);
+  } catch (error) {
+    console.error("Error saving profile data:", error);
+  }
 
   // const sectionElement = await page.$$(
   //   "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2])"
