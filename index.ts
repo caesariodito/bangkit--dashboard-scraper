@@ -39,62 +39,7 @@ async function login(url: string, page: Page) {
   console.log("Page Title:", pageTitle);
 }
 
-function takeData(page: Page) {
-  // select all
-  // open each content (show all dipencet until finish)
-  // take data
-  // preprocess data (another function)
-}
-
-function formatProfileData(data: ProfileData) {
-  const formattedAttendances: { [key: string]: string } = {};
-  const formattedProgresses: { [key: string]: string } = {};
-  const formattedAssignments: { [key: string]: string } = {};
-
-  // Format attendances
-  data.attendances.forEach((attendance) => {
-    const [status, ...eventName] = attendance.split(" ");
-    const key = eventName.join(" ");
-    formattedAttendances[key] = status;
-  });
-
-  // Format progresses
-  data.progresses.forEach((progress) => {
-    const [name, percentageStr] = progress.split(/(\d+%\s*$)/);
-    const key = name.trim();
-    const value = percentageStr.trim().replace("%", "");
-    formattedProgresses[key] = value;
-  });
-
-  // Format assignments
-  data.assignments.forEach((assignment) => {
-    const [status, ...assignmentName] = assignment.split(" ");
-    const key = assignmentName.join(" ");
-    formattedAssignments[key] = status;
-  });
-
-  return {
-    name: data.name,
-    status: data.status ? data.status : "None",
-    formattedAttendances,
-    formattedProgresses,
-    formattedAssignments,
-  };
-}
-
-(async () => {
-  const browser: Browser = await puppeteer.launch({
-    headless: false,
-    // slowMo: 100,
-  }); // Launch a visible browser instance
-  const page: Page = await browser.newPage();
-  await page.setViewport({ width: 1366, height: 1080 });
-
-  const url = "https://dashboard.bangkit.academy/";
-
-  await login(url, page);
-  // await takeData(page);
-
+async function selectAllOptions(page: Page) {
   // Locate the <select> element
   const selectElement = await page.$("select");
 
@@ -109,7 +54,9 @@ function formatProfileData(data: ProfileData) {
   } else {
     console.log("No <select> element found on the page");
   }
+}
 
+async function clickButtons(page: Page) {
   // Find all buttons
   const allButtons = await page.$$("button");
 
@@ -120,9 +67,12 @@ function formatProfileData(data: ProfileData) {
       await button.click();
     }
   }
-
   console.log("All 'Show all' buttons clicked");
-  // WORKS UNTIL HERE
+}
+
+async function takeData(page: Page): Promise<ProfileData[]> {
+  await selectAllOptions(page);
+  await clickButtons(page);
 
   const allProfiles = await page.$$(
     "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div)"
@@ -161,7 +111,7 @@ function formatProfileData(data: ProfileData) {
         (div) => div.textContent
       )) as string;
     } catch {
-      console.error("No status found");
+      console.error("No status found for profile: ", name);
     }
 
     const attendances = (await profile.$$eval(attendancesXPath, (divs) =>
@@ -188,9 +138,48 @@ function formatProfileData(data: ProfileData) {
     console.log("Profile:", i + 1, " - ", name);
     profileData.push(profileObject);
   }
-
   console.log("All profile data collected");
 
+  return profileData;
+}
+
+function formatProfileData(data: ProfileData) {
+  const formattedAttendances: { [key: string]: string } = {};
+  const formattedProgresses: { [key: string]: string } = {};
+  const formattedAssignments: { [key: string]: string } = {};
+
+  // Format attendances
+  data.attendances.forEach((attendance) => {
+    const [status, ...eventName] = attendance.split(" ");
+    const key = eventName.join(" ");
+    formattedAttendances[key] = status;
+  });
+
+  // Format progresses
+  data.progresses.forEach((progress) => {
+    const [name, percentageStr] = progress.split(/(\d+%\s*$)/);
+    const key = name.trim();
+    const value = percentageStr.trim().replace("%", "");
+    formattedProgresses[key] = value;
+  });
+
+  // Format assignments
+  data.assignments.forEach((assignment) => {
+    const [status, ...assignmentName] = assignment.split(" ");
+    const key = assignmentName.join(" ");
+    formattedAssignments[key] = status;
+  });
+
+  return {
+    name: data.name,
+    status: data.status ? data.status : "None",
+    formattedAttendances,
+    formattedProgresses,
+    formattedAssignments,
+  };
+}
+
+async function exportAndPreprocess(profileData: ProfileData[]) {
   // Save profile data to JSON file (error handling included)
   try {
     const fileName = "profile_data.json"; // Customize file name
@@ -204,6 +193,21 @@ function formatProfileData(data: ProfileData) {
   } catch (error) {
     console.error("Error saving profile data:", error);
   }
+}
+
+(async () => {
+  const browser: Browser = await puppeteer.launch({
+    headless: false,
+    // slowMo: 100,
+  }); // Launch a visible browser instance
+  const page: Page = await browser.newPage();
+  await page.setViewport({ width: 1366, height: 1080 });
+
+  const url = "https://dashboard.bangkit.academy/";
+
+  await login(url, page);
+  const data = await takeData(page);
+  await exportAndPreprocess(data);
 
   await browser.close();
 })();
