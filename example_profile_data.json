@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Student A",
+    "status": "Ahead of Schedule",
+    "formattedAttendances": {
+      "Event 1": "Attending",
+      "Event 2": "Attending"
+    },
+    "formattedProgresses": {
+      "Topic 1": "100",
+      "Topic 2": "50"
+    },
+    "formattedAssignments": {
+      "Assignment 1": "Completed",
+      "Assignment 2": "Uncompleted"
+    }
+  },
+  {
+    "name": "Student B",
+    "status": "On Ideal Schedule",
+    "formattedAttendances": {
+      "Event 1": "Attending",
+      "Event 2": "Attending"
+    },
+    "formattedProgresses": {
+      "Topic 1": "100",
+      "Topic 2": "50"
+    },
+    "formattedAssignments": {
+      "Assignment 1": "Completed",
+      "Assignment 2": "Uncompleted"
+    }
+  },
+  {
+    "...": "..."
+  }
+]
