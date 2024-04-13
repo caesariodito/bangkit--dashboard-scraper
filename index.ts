@@ -60,6 +60,8 @@ async function selectAllOptions(page: Page) {
   } else {
     console.log("No <select> element found on the page");
   }
+
+  await sleep(SLEEP_TIME);
 }
 
 async function clickButtons(page: Page) {
@@ -80,7 +82,11 @@ async function takeData(page: Page): Promise<ProfileData[]> {
   await selectAllOptions(page);
   await clickButtons(page);
 
-  sleep(SLEEP_TIME);
+  await sleep(SLEEP_TIME);
+
+  await page.evaluate(() => {
+    debugger;
+  });
 
   const allProfiles = await page.$$(
     "::-p-xpath(/html/body/div/div/div[2]/div/section/section/section[2]/div/div)"
@@ -152,15 +158,15 @@ async function takeData(page: Page): Promise<ProfileData[]> {
 }
 
 function formatProfileData(data: ProfileData) {
-  const formattedAttendances: { [key: string]: string } = {};
-  const formattedProgresses: { [key: string]: string } = {};
-  const formattedAssignments: { [key: string]: string } = {};
+  const attendances: { [key: string]: string } = {};
+  const progresses: { [key: string]: string } = {};
+  const assignments: { [key: string]: string } = {};
 
   // Format attendances
   data.attendances.forEach((attendance) => {
     const [status, ...eventName] = attendance.split(" ");
     const key = eventName.join(" ");
-    formattedAttendances[key] = status;
+    attendances[key] = status;
   });
 
   // Format progresses
@@ -168,22 +174,22 @@ function formatProfileData(data: ProfileData) {
     const [name, percentageStr] = progress.split(/(\d+%\s*$)/);
     const key = name.trim();
     const value = percentageStr.trim().replace("%", "");
-    formattedProgresses[key] = value;
+    progresses[key] = value;
   });
 
   // Format assignments
   data.assignments.forEach((assignment) => {
     const [status, ...assignmentName] = assignment.split(" ");
     const key = assignmentName.join(" ");
-    formattedAssignments[key] = status;
+    assignments[key] = status;
   });
 
   return {
     name: data.name,
     status: data.status ? data.status : "None",
-    formattedAttendances,
-    formattedProgresses,
-    formattedAssignments,
+    attendances,
+    progresses,
+    assignments,
   };
 }
 
