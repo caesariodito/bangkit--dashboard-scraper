@@ -2,7 +2,7 @@
 
 A side project to scrape bangkit dashboard website to make my life less burdening. kekw.
 
-Used typescript, bun, puppeteer and maybe other 3rd party libraries to preprocess the data (soon).
+Used typescript, bun, puppeteer and exceljs.
 
 Below is a brief intro and the reasons for the tech stack that I chose. **_It's just some personal notes, you don't need to read it tbh._**
 
@@ -33,7 +33,9 @@ This is a step-by-step guide to run this project. Even tho I documented how to u
 
    ```bash
    npm install
+   # or
    pnpm install
+   # or
    ...
    bun install # <-- I use this code, but everything should be working as expected too
    ```
@@ -56,8 +58,11 @@ This is a step-by-step guide to run this project. Even tho I documented how to u
 
 7. you are then free to tweak and preprocess the data further. for example, importing the .json file directly to spreadsheet.
 
+8. Optional, I created a script to convert the JSON file into XLSX (Excel), you can access it via `bun run convert` or if you want to modify the script, it is available on the [`convert.ts`](convert.ts) file.
+
 ## Future Improvements
 
-- [ ] export to excel/csv (soon)
+- [x] export to excel/csv (soon)
 - [ ] integrate with spreadsheet directly via API
 - [ ] bypass login with indexedDB (idk really know much about this)
+- [ ] create a weekly cron-job to fully automate the tasks
