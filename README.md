@@ -58,7 +58,7 @@ This is a step-by-step guide to run this project. Even tho I documented how to u
 
 7. you are then free to tweak and preprocess the data further. for example, importing the .json file directly to spreadsheet.
 
-8. Optional, I created a script to convert the JSON file into XLSX (Excel), you can access it via `bun run convert` or if you want to modify the script, it is available on the [`convert.ts`](convert.ts) file.
+8. Optionally, I created a script to convert the JSON file into XLSX (Excel), you can access it via `bun run convert` or if you want to modify the script, it is available on the [`convert.ts`](convert.ts) and [`package.json`](package.json) file. The result of the script can be viewed in [`example_profile.xlsx`](example_profile.xlsx)
 
 ## Future Improvements
 
