@@ -20,7 +20,13 @@ If you want to contribute to this side project as the demands of the spreadsheet
 
 ## The Demo
 
+### Scraper Video
+
 [![Drive Video](/docs/thumbnail.png)](https://drive.google.com/file/d/1Vm6LOc4BTR1BNAmyknrGwFYgjky16HK2/preview)
+
+### Convert Video
+
+[![Drive Video](/docs/thumbnail_2.png)](https://drive.google.com/file/d/1xyuJiBIRteDHicauCl6sDtzlNWUvJ_jI/preview)
 
 ## How to Run
 
