@@ -213,9 +213,11 @@ async function exportAndPreprocess(profileData: ProfileData[]) {
   const browser: Browser = await puppeteer.launch({
     headless: false,
     // slowMo: 100,
+    defaultViewport: null,
+    executablePath:
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   }); // Launch a visible browser instance
   const page: Page = await browser.newPage();
-  await page.setViewport({ width: 1366, height: 1080 });
 
   await login(url, page);
   const data = await takeData(page);
